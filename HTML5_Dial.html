@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+    <!-- CREATE AN HTML5 CANVASE OBJECT -->
+    <canvas id="test_dial" width="1024" height="1024" style="border:1px solid #000000;">
+        Opps. Sorry, your browser doesn't support the HTML canvas tag.
+    </canvas>
+
+    <!-- SCRIPT TO DRAW THE RADIAL MENU ON THE SCREEN -->
+    <script>
+        console.log("test_dial started");
+
+        // Get a reference to the canvas object
+        var canv = document.getElementById("test_dial");
+
+        var dialAngle = 0.0;
+
+        // Get a reference to canvas the drawing context
+        var ctx = canv.getContext("2d");
+
+        // Set the context font
+        ctx.font = "16px Arial";
+
+        // Create a test menu
+        var menu = [];
+
+        for(i = 0; i < 25; i++) {
+            menu.push("Item " + i);
+        }
+
+        var angleStep = 0.02 * Math.PI;
+
+        // Set the callback for mouse moves
+        canv.onmousemove = function(mouseEvent) {
+
+            // If only the left mouse button is pressed
+            // (i.e. only track left mouse drags)
+            if(mouseEvent.buttons == 1) {
+
+                // Get the current mouse location
+                x = mouseEvent.offsetX - 512;
+                y = mouseEvent.offsetY - 512;
+
+                // Get the change in position since the last move
+                deltaX = mouseEvent.movementX;
+                deltaY = mouseEvent.movementY;
+
+                // Calculate the last mouse location
+                lastX = x - deltaX;
+                lastY = y - deltaY;
+
+                // The z-component of the cross-product.
+                // If positive, turn counter-clockwise.
+                // If negative, turn clockwise.
+                z = -(x * lastY - y * lastX);
+
+                // If zero, return to avoid devide by zero
+                if(z == 0) return;
+
+                // Normalize
+                z /= Math.abs(z);
+
+                // Calculate the change in angle
+                a = z * Math.acos((x*lastX + y*lastY) / Math.sqrt((x*x + y*y) * (lastX*lastX + lastY*lastY)));
+
+                // Add it to the current dial angle
+                dialAngle += a;
+            }
+        }
+
+        // Define a function to redraw every animation frame
+        function draw() {
+
+            // Reset the context transform matrix
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+            // Clear
+            ctx.clearRect(0, 0, 1024, 1024);
+
+            // Start creating the path
+            ctx.beginPath();
+
+            // Define an arc centered at (512, 512), with radius 500,
+            // from 0 radians to 2π radians (a complete circle)
+            ctx.arc(512, 512, 500, 0, 2*Math.PI);
+
+            // Finish creating the path
+            ctx.closePath();
+
+            // Draw the path
+            ctx.stroke();
+
+            // Set a variable to keep track of the angle
+            var angle = 0.0;
+
+            // Iterate through the menu, calling the function for each item
+            menu.forEach(function(text) {
+                // Set the identity  matrix (i.e. reset the transform)
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+                // Transforms are applied in the reverse order to
+                // which they are called
+
+                // 3. Move graphics to the center of the circle
+                ctx.translate(512, 512);
+
+                // 2. Rotate graphics by the accumulated angle and also apply
+                // the dial angle as set by the user's mouse drags
+                ctx.rotate(angle + dialAngle);
+
+                // 1. Translate the text to the right by 400 pixels
+                ctx.translate(400, 0);
+
+                // Draw the menu item text
+                ctx.fillText(text, 0, 0);
+
+                // Update the accumulated angle (in radians)
+                angle += angleStep
+            });
+
+            // Trigger the next frame
+            window.requestAnimationFrame(draw);
+        }
+
+        // Start the animation
+        window.requestAnimationFrame(draw);
+
+
+    </script>
+</body>
+</html>
